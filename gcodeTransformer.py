@@ -14,7 +14,7 @@ arg.add_argument ('-r', '--rotate', default=0, help='rotate = rotate angle (time
 arg.add_argument ('-m', '--mirror', default=0, help='mirror = axis mirroring (axis name)')
 arg.add_argument ('-s', '--scale', default=0, help='scale = percentage scale, negative is supported')
 arg.add_argument ('-c', '--combine', default=0, help='combine = combine code (example 2x3x10 or 1x2x8 ... where the first number on X is the second number on Y is the third indent) ')
-arg.add_argument ('-rd', '--round', default=0, help='round X and Y value, can be combined with another operation or used alone')
+arg.add_argument ('-rd', '--round', default=-1, help='round X and Y value, can be combined with another operation or used alone')
 arg.parse_args()
 
 
@@ -43,7 +43,7 @@ with open(input_file) as file:
 
 
 def roundUp(x):
-    if roundIt > 0:
+    if roundIt > -1:
         return round(x,roundIt)
     return x
 
@@ -213,16 +213,15 @@ def roundUpOnly(i_data):
     return n_data
 
 
-if roundIt > 0 and not any(i != 0 for i in [move_x, move_y, rotate, mirror, scale, combine]):
+if roundIt > -1 and not any(i != 0 for i in [move_x, move_y, rotate, mirror, scale, combine]):
     data = roundUpOnly(data)
 
 # ==============================================================================
 
 if not output_file:
-    #output_file = '{name}_new.gcode'.format(name=input_file.replace('.gcode', ''))
-    return data
-
-with open(output_file, 'w') as file:
-    if comma:
-        data = data.replace('\n', f"{comma}\n")
-    file.write(data)
+    print(data)
+else:
+    with open(output_file, 'w') as file:
+        if comma:
+            data = data.replace('\n', f"{comma}\n")
+        file.write(data)

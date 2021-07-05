@@ -7,7 +7,7 @@ import sys, argparse
 
 arg = argparse.ArgumentParser()
 arg.add_argument ('-f', '--file', required=True, help='input file name (required)')
-arg.add_argument ('-o', '--output_file', default='', help='output_file = output file name (if not specified, it will be the same as the original but with the prefix _new)')
+arg.add_argument ('-o', '--output_file', default='', help='output_file = output file name (if not specified, it will return the code generated)')
 arg.add_argument ('-x', '--move_x', default=0, help='move_x = X offset in mm')
 arg.add_argument ('-y', '--move_y', default=0, help='move_y = B offset in mm')
 arg.add_argument ('-r', '--rotate', default=0, help='rotate = rotate angle (times 90)')
@@ -219,7 +219,8 @@ if roundIt > 0 and not any(i != 0 for i in [move_x, move_y, rotate, mirror, scal
 # ==============================================================================
 
 if not output_file:
-    output_file = '{name}_new.gcode'.format(name=input_file.replace('.gcode', ''))
+    #output_file = '{name}_new.gcode'.format(name=input_file.replace('.gcode', ''))
+    return data
 
 with open(output_file, 'w') as file:
     if comma:

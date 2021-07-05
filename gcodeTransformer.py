@@ -218,10 +218,11 @@ if roundIt > -1 and not any(i != 0 for i in [move_x, move_y, rotate, mirror, sca
 
 # ==============================================================================
 
+
+if comma:
+    data = data.replace('\n', f"{comma}\n").replace('\n;','')
 if not output_file:
     print(data)
 else:
     with open(output_file, 'w') as file:
-        if comma:
-            data = data.replace('\n', f"{comma}\n")
         file.write(data)

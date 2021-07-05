@@ -4,7 +4,7 @@ move, rotate, mirror, scale, combine and round up X and Y of gcode
 **Available options**:
 ```
 -f, --file = input file name (required)
--t, --save_to = filename in to save (if not specified, it will be the same as the original but with the prefix _new)
+-t, --save_to = filename in to save (if not specified, it will return the code generated)
 -x, --move_x = X offset in mm
 -y, --move_y = B offset in mm
 -r, --rotate = rotate angle (times 90)

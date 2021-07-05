@@ -11,7 +11,7 @@ move, rotate, mirror, scale, combine and round up X and Y of gcode
 -m, --mirror = axis mirroring (axis name)
 -s, --scale = percentage scale, negative is supported
 -c, --combine = combine code (example 2x3x10 or 1x2x8 ... where the first number on X is the second number on Y is the third indent)
--rd', '--round', round X and Y value, can be combined with another operation or used alone
+-rd', --round = round up to '-rd' decimal places X and Y value, can be combined with another operation or used alone
 ```
 
 based on <a href="https://github.com/tguruslan/gcode_move_and_rotate">this project</a>

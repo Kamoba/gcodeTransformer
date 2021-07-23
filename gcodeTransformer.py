@@ -1,16 +1,19 @@
-#!/usr/bin/env python
+import argparse
+import sys
+import re
+import io
+########################################################
 
-import sys, argparse
 
-# ==============================================================================
-
-
-arg = argparse.ArgumentParser()
+arg = argparse.ArgumentParser(add_help=False) 
 arg.add_argument ('-f', '--file', required=True, help='input file name (required)')
 arg.add_argument ('-o', '--output_file', default='', help='output_file = output file name (if not specified, it will return the code generated)')
 arg.add_argument ('-x', '--move_x', default=0, help='move_x = X offset in mm')
 arg.add_argument ('-y', '--move_y', default=0, help='move_y = B offset in mm')
 arg.add_argument ('-r', '--rotate', default=0, help='rotate = rotate angle (times 90)')
+arg.add_argument ('-k', '--keep_space', nargs='?', help='to keep empty space around gcode (page size) on rotate if not will gcode will fit to the axe')
+arg.add_argument ('-w', '--width', default=0, help='page width require if --keep_space used')
+arg.add_argument ('-h', '--height', default=0, help='page height require if --keep_space used')
 arg.add_argument ('-m', '--mirror', default=0, help='mirror = axis mirroring (axis name)')
 arg.add_argument ('-s', '--scale', default=0, help='scale = percentage scale, negative is supported')
 arg.add_argument ('-c', '--combine', default=0, help='combine = combine code (example 2x3x10 or 1x2x8 ... where the first number on X is the second number on Y is the third indent) ')
@@ -23,10 +26,18 @@ output_file = arg.parse_args().output_file
 move_x = int(arg.parse_args().move_x)
 move_y = int(arg.parse_args().move_y)
 rotate = int(arg.parse_args().rotate)
+width = int(float(arg.parse_args().width))  # to prevent error on flot value
+height = int(float(arg.parse_args().height))
 mirror = arg.parse_args().mirror
 scale = int(arg.parse_args().scale)
 combine = arg.parse_args().combine
 roundIt = int(arg.parse_args().round)
+
+keepSpace = False
+if '-k' in sys.argv or '--keep_space' in sys.argv:
+    if width <= 0 or height <= 0:
+        raise ValueError('width and height required!')
+    keepSpace = True
 
 # ==============================================================================
 
@@ -64,14 +75,16 @@ def sizes(i_data):
                     max_y = y
                 if y < min_y:
                     min_y = y
-        size_x = max_x - min_x
-        size_y = max_y - min_y
+    size_x = max_x - min_x
+    size_y = max_y - min_y
     return [max_x, max_y, min_x, min_y, size_x, size_y]
+
 
 # ==============================================================================
 
 
-def rotate_data(i_data):
+
+def rotate_90(i_data):
     n_data = ''
     for row in i_data.split('\n'):
         n_row = []
@@ -89,13 +102,51 @@ def rotate_data(i_data):
 
     return n_data
 
+def rotate_270(i_data):
+    n_data = ''
+    for row in i_data.split('\n'):
+        X = re.findall(r'X([0-9\.e\-]+)', row, re.IGNORECASE)
+        Y = re.findall(r'Y([0-9\.e\-]+)', row, re.IGNORECASE)
+        if len(X)>0 and len(Y)>0:
+            x = roundUp(-float(Y[0])+g_size[5])
+            y = roundUp(float(X[0]))
+            row = re.sub(r"X[0-9\.e\-]+", f"X{x}", row)
+            row = re.sub(r"Y[0-9\.e\-]+", f"Y{y}", row)
+        n_data += f"{row}\n"
+    return n_data
+
+def rotate_180(i_data):
+    n_data = ''
+    for row in i_data.split('\n'):
+        X = re.findall(r'X([0-9\.e\-]+)', row, re.IGNORECASE)
+        Y = re.findall(r'Y([0-9\.e\-]+)', row, re.IGNORECASE)
+        if len(X)>0 and len(Y)>0:
+            x = roundUp(-float(X[0])+g_size[4])
+            y = roundUp(-float(Y[0])+g_size[5])
+            row = re.sub(r"X[0-9\.e\-]+", f"X{x}", row)
+            row = re.sub(r"Y[0-9\.e\-]+", f"Y{y}", row)
+        n_data += f"{row}\n"
+    return n_data
+
 
 if rotate != 0:
-    if rotate == -90:
-        rotate = 270
-    for i in range(int(rotate / 90)):
-        g_size = sizes(data)
-        data = rotate_data(data)
+    if keepSpace:
+        frame = f"\nG1 F1000 X{width} Y0 TEST\nG1 X{width} Y{height} TEST\nG1 X0 Y{height} TEST\nG1 X0 Y0 TEST"
+        data = f"{data}{frame}"
+    g_size = sizes(data)
+    if rotate == -90 or rotate == 270:
+        data = rotate_270(data)
+    elif abs(rotate) == 180:
+        data = rotate_180(data)
+    elif rotate == 90 or rotate == -270:
+        data = rotate_90(data)
+    if keepSpace:
+        # clean up
+        data = re.sub(r"G1.+?(?=TEST)TEST\n?", "", data)
+    if rotate%90 != 0 or abs(rotate) > 360:
+        raise ValueError('angle should be a multiple of 90!')
+
+
 
 # ==============================================================================
 
@@ -220,9 +271,10 @@ if roundIt > -1 and not any(i != 0 for i in [move_x, move_y, rotate, mirror, sca
 
 
 if comma:
-    data = data.replace('\n', f"{comma}\n").replace('\n;','')
+    data = data.replace('\n', f"{comma}\n").replace('\n;','').replace('\n\n','\n')
+    data = re.sub(r";\n$", ";", data)
 if not output_file:
     print(data)
 else:
-    with open(output_file, 'w') as file:
-        file.write(data)
+    f = io.open(output_file, 'w', newline='\n')
+    f.write(data)

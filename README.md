@@ -8,6 +8,9 @@ move, rotate, mirror, scale, combine and round up X and Y of gcode
 -x, --move_x = X offset in mm
 -y, --move_y = B offset in mm
 -r, --rotate = rotate angle (times 90)
+-k', --keep_space, to keep empty space around gcode (page size) on rotate if not will gcode will fit to the axe')
+-w', --width, page width require if --keep_space used
+-h', --height, page height require if --keep_space used
 -m, --mirror = axis mirroring (axis name)
 -s, --scale = percentage scale, negative is supported
 -c, --combine = combine code (example 2x3x10 or 1x2x8 ... where the first number on X is the second number on Y is the third indent)
